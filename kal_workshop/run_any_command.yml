@@ -1,0 +1,49 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    # Calling socks tunnel role if we have windows endpoint
+#     - name: Role ensures that the socks tunnel is setup
+#       import_role:
+#         name: ansible-role-event-socks-tunnel
+#       vars:
+#         acc_id: "{{ blueid_shortcode }}"
+#         transaction_id: "{{ tower_job_id }}"
+#       when: not (skip_socks | d(false))
+
+#     - name: Run any localhost command - this is not allowed in PROD
+#       ignore_errors: true
+#       shell: "{{ execute_local_command | d('hostname') }}"
+#       register: command_output_local
+
+#     - name: Print local output
+#       debug:
+#         var: command_output_local
+#       when: command_output_local is defined
+
+- hosts: all
+  gather_facts: true
+  gather_subset: "!all"
+  tasks:
+#     - name: uri
+#       ignore_errors: true
+#       ansible.builtin.uri:
+#         url: https://sfs-secure-file-service2.devtest2.cacf.kyndryl.net
+        
+    - name: Run any non-windows command - this is not allowed in PROD
+      shell: "{{ execute_command | d('hostname') }}"
+      register: command_output_nonwin
+      ignore_errors: true
+      when: (ansible_os_family is defined) and (ansible_os_family != "Windows")
+
+#     - name: Run any windows command - this is not allowed in PROD
+#       win_command: "{{ execute_command | d('hostname') }}"
+#       register: command_output_win
+#       ignore_errors: true
+#       when: (ansible_os_family is defined) and (ansible_os_family == "Windows")
+
+    - name: Print outputs
+      debug:
+        var: command_output
+      vars:
+        command_output: "{{ command_output_nonwin.stdout | d('') }}{{ command_output_win.stdout | d('') }}"
